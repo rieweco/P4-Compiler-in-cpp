@@ -1,0 +1,15 @@
+program 
+var x = 2 .
+start
+   start
+      var x = 2 .
+      start
+         print x .
+      stop
+      start
+         var x = 2 .
+         print x .
+      stop
+   stop
+stop
+
