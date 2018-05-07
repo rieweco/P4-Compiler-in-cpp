@@ -13,10 +13,15 @@ private:
 	vector<Semantics *> *semantics = new vector<Semantics *>();
 	int numIDs = 0;
 	int numLabels = 0;
+	int globalFlag;
+	int end;
+	int begin;
 	vector<string> *loopCodeGen = new vector<string>();
 public:
 	CheckSem(Node *tree);
 	~CheckSem();
+	void setFlag(int flag);
+	int getFlag();
 	string createTempNumber();
 	string createTempLabel();	
 	string runOnNode(Node *node);

@@ -13,6 +13,25 @@ int Semantics::getStackCount() {
 	return stackCount;
 }
 
+//function to set flag value
+void Semantics::setFlag(int flag) {
+	if (flag == 0) {
+		globalFlag = 0;
+	}
+	else if (flag == 1) {
+		globalFlag = 1;	
+	}
+	else {
+		exit(1);
+	}
+}
+
+//function to get flag value
+int Semantics::getFlag() {
+	return globalFlag;
+}
+ 
+
 //getter function: vector for getting variables not needed for semantics
 vector<string> *Semantics::getVars() {
 	return varsNotNeeded;

@@ -10,6 +10,7 @@ using namespace std;
 class Semantics {
 private:
 	int stackCount;
+	int globalFlag;
 	vector<string> *varsNotNeeded = new vector<string>();
 	vector<string> *varsNeeded = new vector<string>();
 public:
@@ -18,6 +19,8 @@ public:
 	
 	//getters and setters
 	int getStackCount();
+	int getFlag();
+	void setFlag(int flag);
 	vector<string> *getVars();
 	vector<string> *getNeededVars();
 	void setVarsNotNeeded(vector<string> *varsNotNeeded);

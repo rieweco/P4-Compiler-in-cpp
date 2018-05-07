@@ -17,6 +17,7 @@ string CheckSem::checkit() {
 	codeGen += addTemps();
 	
 	cout << "checkSem complete. No Errors found!" << endl;
+	cout << "program code: \n" << codeGen << endl;
 	
 	//return code string for tree
 	return codeGen;
@@ -31,10 +32,14 @@ string CheckSem::runOnNode(Node *node) {
 		vector<Node *> &children = node->getChildren();
 		if (node->getKeyword() == "program") {
 			if (children.size() == 2) {
+				setFlag(1);
 				//recursive call to add children to codeGen string
 				codeGen += runOnNode(children.at(0));
+				setFlag(0);
 				codeGen += runOnNode(children.at(1));
-				cout << "program code: " << codeGen << endl;
+				for (int i = end; i > 0; i--) {
+                                	codeGen += "POP\n";
+                        	}
 			}
 			
 		}
@@ -42,14 +47,24 @@ string CheckSem::runOnNode(Node *node) {
 		else if (node->getKeyword() == "block") {
 			//set new semantics stack
 			semantics->push_back(new Semantics(semantics->size()));
+			begin = numIDs;
+			
 			//recursion on left node then right node
 			codeGen += runOnNode(children.at(1));
 			codeGen += runOnNode(children.at(2));
 			//test cout to show whats in block node
 			//cout << "block code: " << codeGen << endl;
-			
+			end = numIDs;
 			//pop semantics stack
 			semantics->pop_back();
+			
+			if (globalFlag == 0) {	
+				if (end > begin) {
+					end--;
+					codeGen += "POP\n";
+					globalFlag = 1;
+				}
+			}
 		}
 		//check vars node children
 		else if (node->getKeyword() == "vars") {
@@ -63,12 +78,21 @@ string CheckSem::runOnNode(Node *node) {
 					//add Identifier to stack
 					vector<string> *vars = semantics->at(semantics->size() - 1)->getNeededVars();
 					vars->push_back(children.at(1)->getValue());
+					
 					semantics->at(semantics->size() - 1)->setVarsNeeded(vars);
 					//add Integer to stack
 					vector<string> *temps = semantics->at(semantics->size() - 1)->getVars();
 					temps->push_back(createTempNumber());
 					semantics->at(semantics->size() - 1)->setVarsNotNeeded(temps);
 					
+					string num = to_string(numIDs);	
+					codeGen += "LOAD ";
+					codeGen += children.at(3)->getValue();
+					codeGen += "\n";	
+					codeGen += "PUSH\n";
+					codeGen += "STACKW ";
+					codeGen += num;
+					codeGen += "\n";
 				}
 				else {
 					cout << "checkSem Error: Var: " << children.at(1)->getValue() << " is already on the Stack!" << endl;
@@ -104,7 +128,12 @@ string CheckSem::runOnNode(Node *node) {
 					vector<string> *temps = semantics->at(semantics->size() - 1)->getVars();
 					temps->push_back(createTempNumber());
 					semantics->at(semantics->size() - 1)->setVarsNotNeeded(temps);
-					
+						
+					string num = to_string(numIDs);	
+					codeGen += "PUSH\n";
+					codeGen += "STACKW ";
+					codeGen += num;
+					codeGen += "\n";
 				}
 				else {
 					cout << "checkSem Error: Var: " << children.at(1)->getValue() << " is already on the Stack!" << endl;
@@ -208,10 +237,10 @@ string CheckSem::runOnNode(Node *node) {
 			}
 			else if (children.size() == 1) {
 				if (isalpha(children.at(0)->getValue()[0])) {
-					codeGen += "LOAD ";
-					string varID = getTempVarName(children.at(0)->getValue());
-					codeGen += varID;
-					codeGen += "\n";
+					//codeGen += "LOAD ";
+					//string varID = getTempVarName(children.at(0)->getValue());
+					//codeGen += varID;
+					//codeGen += "\n";
 					//test cout to show whats in R node
 					//cout << "R code: " << codeGen << endl;
 				}
@@ -307,11 +336,18 @@ string CheckSem::runOnNode(Node *node) {
 			if (children.size() == 3) {
 				codeGen += runOnNode(children.at(1));
 				string tempID = createTempNumber();
+				numIDs++;
+				string num = to_string(numIDs);
+				codeGen += "STACKR ";
+				codeGen += num;
+				codeGen += "\n";
 				codeGen += "STORE ";
 				codeGen += tempID;
+				cout << "tempid: " << tempID;
 				codeGen += "\n";
 				codeGen += "WRITE ";
 				codeGen += tempID;
+				cout << "	tempid: " << tempID << endl;
 				codeGen += "\n";
 				//test cout to show whats in out node
 				//cout << "out code: " << codeGen << endl;
@@ -425,6 +461,7 @@ string CheckSem::runOnNode(Node *node) {
 				}
 				else if (children.at(0)->getValue() == "==") {
 					string tempID = createTempNumber();
+					numIDs++;
 					codeGen += "STORE ";
 					codeGen += tempID;
 					codeGen += "\n";
@@ -444,7 +481,25 @@ string CheckSem::runOnNode(Node *node) {
 		
 	return codeGen;
 }
-		
+
+//function to set flag value
+void CheckSem::setFlag(int flag) {
+	if (flag == 0) {
+		globalFlag = 0;
+	}	
+	else if (flag == 1) {
+		globalFlag = 1;
+	}
+	else {
+		cout << "INVALID FLAG SET!\n";
+		exit(1);
+	}
+}
+
+//function to get flag value
+int CheckSem::getFlag() {
+	return globalFlag;
+}
 			
 //function to check if var is in scope
 bool CheckSem::isVarUnique(string &var) {
@@ -537,7 +592,7 @@ string CheckSem::createTempLabel() {
 
 //function to assign and increment tempIDs
 string CheckSem::createTempNumber() {
-	string num = to_string(numIDs++);
+	string num = to_string(numIDs);
 	string id = "T";
 	id += num;
 
